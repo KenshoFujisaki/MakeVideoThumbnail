@@ -1,15 +1,23 @@
 #!/bin/sh
 
-input_dir_path="." # 入力ディレクトリパス
-ffmpeg="./ffmpeg"  # ffmpegバイナリパス
-find="/bin/find"   # findバイナリパス
-tiles_h=8          # サムネイルタイルの水平方向数
-tiles_v=8          # サムネイルタイルの垂直方向数
-log_file_path="./mk_thumbnail_`date '+%Y%m%d%H%M%S'`.log" # ログファイルパス
+input_dir_path="x:/video/PT2/"                                             # 入力ディレクトリパス
+output_dir_path="${input_dir_path}/thumbs/"                                # 出力ディレクトリパス
+log_file_path="${output_dir_path}/mk_thumbnail_`date '+%Y%m%d%H%M%S'`.log" # ログファイルパス
+
+ffmpeg="/bin/ffmpeg"   # ffmpegバイナリパス
+find="/bin/find"       # findバイナリパス
+
+tiles_h=8              # サムネイルタイルの水平方向数
+tiles_v=8              # サムネイルタイルの垂直方向数
+
+# 出力ディレクトリ生成
+if [ ! -e "$output_dir_path" ]; then
+  mkdir -p "$output_dir_path"
+fi
 
 # サムネイル作成対象のファイル数の取得
 IFS=$'\n';
-input_files_cmd='$find $input_dir_path -type f -maxdepth 1 \( -name "*.flv" -o -name "*.mp4" -o -name "*.avi" \)'
+input_files_cmd='$find $input_dir_path -type f -maxdepth 1 \( -name "*.flv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.ts" -o -name "*.wmv" \)'
 nof_files=`eval "$input_files_cmd" | wc -l`
 echo "#input files: $nof_files" | tee $log_file_path
 
@@ -21,7 +29,9 @@ for file in `eval "$input_files_cmd"`; do
   counter=$(($counter + 1))
 
   # 既にサムネイルがあるならスキップ
-  if [ -e  "${file%.*}_thumb.jpg" ]; then
+  input_filename="${file##*/}"
+  output_filepath="${output_dir_path}${input_filename%.*}_thumb.jpg"
+  if [ -e  "$output_filepath" ]; then
     printf "already existing.\n" | tee -a $log_file_path
     continue
   fi
@@ -43,10 +53,10 @@ for file in `eval "$input_files_cmd"`; do
   # サムネイル作成処理
   tiles=$(($tiles_h * $tiles_v))
   thumb_fps=`expr $frames \/ $tiles` 
-  if [ $thumb_fps -gt 1000 ]; then 
+  if [ "$thumb_fps" -gt 1000 ]; then 
     thumb_fps=1000
   fi
-  ffmpeg_msg=`$ffmpeg -y -i "$file" -vf thumbnail=${thumb_fps},tile=${tiles_h}x${tiles_v},scale=1920:-1 "${file%.*}_thumb.jpg" \
+  ffmpeg_msg=`$ffmpeg -y -i "$file" -vf thumbnail=${thumb_fps},tile=${tiles_h}x${tiles_v},scale=1920:-1 "$output_filepath" \
     2>&1 > /dev/null | grep -E 'error|failed' | tr -d '\n'`
   if [ "$ffmpeg_msg" = "" ]; then
     printf "succeeded.\n" | tee -a $log_file_path
