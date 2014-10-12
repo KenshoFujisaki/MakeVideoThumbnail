@@ -1,4 +1,5 @@
 #!/bin/sh
+
 input_dir_path="." # 入力ディレクトリパス
 ffmpeg="./ffmpeg"  # ffmpegバイナリパス
 find="/bin/find"   # findバイナリパス
@@ -45,7 +46,11 @@ for file in `eval "$input_files_cmd"`; do
   if [ $thumb_fps -gt 1000 ]; then 
     thumb_fps=1000
   fi
-  $ffmpeg -y -i "$file" -vf thumbnail=${thumb_fps},tile=${tiles_h}x${tiles_v},scale=1920:-1 "${file%.*}_thumb.jpg" >/dev/null 2>&1 | tr -d '\n' | tee -a $log_file_path
-
-  printf "done.\n" | tee -a $log_file_path
+  ffmpeg_msg=`$ffmpeg -y -i "$file" -vf thumbnail=${thumb_fps},tile=${tiles_h}x${tiles_v},scale=1920:-1 "${file%.*}_thumb.jpg" \
+    2>&1 > /dev/null | grep -E 'error|failed' | tr -d '\n'`
+  if [ "$ffmpeg_msg" = "" ]; then
+    printf "succeeded.\n" | tee -a $log_file_path
+  else
+    printf "error (ffmpeg:$ffmpeg_msg)\n" | tee -a $log_file_path
+  fi
 done
