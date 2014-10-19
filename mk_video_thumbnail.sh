@@ -1,14 +1,14 @@
 #!/bin/sh
 
-input_dir_path="."															# 入力ディレクトリパス
-output_dir_path="${input_dir_path}/thumbs/"									# 出力ディレクトリパス
+input_dir_path="."								# 入力ディレクトリパス
+output_dir_path="${input_dir_path}/thumbs/"					# 出力ディレクトリパス
 log_file_path="${output_dir_path}/mk_thumbnail_`date '+%Y%m%d%H%M%S'`.log"	# ログファイルパス
 
 ffmpeg="/bin/ffmpeg"	# ffmpegバイナリパス
 find="/bin/find"	# findバイナリパス
 
-tiles_h=8			# サムネイルタイルの水平方向数
-tiles_v=8			# サムネイルタイルの垂直方向数
+tiles_h=8		# サムネイルタイルの水平方向数
+tiles_v=8		# サムネイルタイルの垂直方向数
 
 # 出力ディレクトリ生成
 if [ ! -e "$output_dir_path" ]; then
@@ -81,7 +81,8 @@ for file in `eval "$input_files_cmd"`; do
 	find_video_cmd_result=`$find $input_dir_path -maxdepth 1 -mindepth 1 -name "${video_file_name}.*"`
 	if [ "" = "$find_video_cmd_result" ]; then
 		rm -f "$file"
-		printf "source video file of thumbnail:${file} is missing. therefore, this thumbnail is removed.\n" | tee -a $log_file_path
+		printf "source video file of thumbnail:${file} is missing. therefore, this thumbnail is removed.\n" \
+			| tee -a $log_file_path
 	fi
 done
 printf "complete !!"
